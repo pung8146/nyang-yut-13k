@@ -8,7 +8,6 @@ canvas.height = 540;
 
 // --- [1단계] 윷 던지기 로직 ---
 let yutResult = { name: "Ready", value: 0 };
-// (윷 던지기 함수는 변경사항 없습니다)
 function throwYut() {
   let flipped = 0;
   for (let i = 0; i < 4; i++) {
@@ -28,64 +27,60 @@ function throwYut() {
   yutResult = results[flipped === 0 ? 0 : flipped];
 }
 
-// --- [2단계] 윷놀이판 데이터 및 그리기 (완전히 새로 작성) ---
+// --- [2단계] 윷놀이판 데이터 및 그리기 ---
 
-// 2-1. 윷놀이판 모든 '자리'의 좌표를 직접 정의 (가장 확실한 방법)
+// 2-1. 윷놀이판 모든 '자리'의 좌표를 직접 정의
 const stations = [
-  // 바깥 경로 (0-19)
-  { id: 0, x: 280, y: 70 },
-  { id: 1, x: 380, y: 70 },
-  { id: 2, x: 480, y: 70 },
-  { id: 3, x: 580, y: 70 },
+  { id: 0, x: 680, y: 470 },
+  { id: 1, x: 680, y: 370 },
+  { id: 2, x: 680, y: 270 },
+  { id: 3, x: 680, y: 170 },
   { id: 4, x: 680, y: 70 },
-  { id: 5, x: 680, y: 170 },
-  { id: 6, x: 680, y: 270 },
-  { id: 7, x: 680, y: 370 },
-  { id: 8, x: 680, y: 470 },
-  { id: 9, x: 580, y: 470 },
-  { id: 10, x: 480, y: 470 },
-  { id: 11, x: 380, y: 470 },
+  { id: 5, x: 580, y: 70 },
+  { id: 6, x: 480, y: 70 },
+  { id: 7, x: 380, y: 70 },
+  { id: 8, x: 280, y: 70 },
+  { id: 9, x: 280, y: 170 },
+  { id: 10, x: 280, y: 270 },
+  { id: 11, x: 280, y: 370 },
   { id: 12, x: 280, y: 470 },
-  { id: 13, x: 280, y: 370 },
-  { id: 14, x: 280, y: 270 },
-  { id: 15, x: 280, y: 170 },
-  // 안쪽 경로 (16-20)
-  { id: 16, x: 380, y: 170 },
-  { id: 17, x: 580, y: 170 },
-  { id: 18, x: 580, y: 370 },
-  { id: 19, x: 380, y: 370 },
+  { id: 13, x: 380, y: 470 },
+  { id: 14, x: 480, y: 470 },
+  { id: 15, x: 580, y: 470 },
+  { id: 16, x: 580, y: 370 },
+  { id: 17, x: 380, y: 370 },
+  { id: 18, x: 380, y: 170 },
+  { id: 19, x: 580, y: 170 },
   { id: 20, x: 480, y: 270 },
 ];
 
-// 2-2. 각 경로가 어떤 '자리'들을 순서대로 연결하는지 정의
+// 2-2. 각 경로가 어떤 '자리'들을 순서대로 연결하는지 정의 (ID 기준 최종 수정)
 const paths = {
+  // 0 -> 1 -> 2 ... 순서로 시계 반대 방향으로 도는 경로
   outer: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0],
-  shortcut1: [0, 16, 20, 8, 12],
-  shortcut2: [4, 17, 20, 19, 12], // 윷놀이판 규칙상 실제로는 10번으로 갑니다.
+  // 지름길도 새로운 ID 체계에 맞게 수정
+  shortcut1: [4, 17, 20, 18, 8],
+  shortcut2: [12, 19, 20, 16, 0],
 };
-// 윷놀이판 규칙에 따라 오른쪽 위에서 중앙을 거쳐 왼쪽 아래로 가는 지름길은 없습니다.
-// 여기서는 시각적 표현을 위해 두 대각선을 모두 그립니다.
-paths.shortcut2_visual = [4, 17, 20, 19, 12];
 
-// 2-3. 윷놀이판 그리는 함수
 function drawBoard() {
   ctx.strokeStyle = "white";
   ctx.lineWidth = 2;
 
-  // 경로 그리기
-  for (const pathName in paths) {
-    const path = paths[pathName];
+  const allPaths = [paths.outer, paths.shortcut1, paths.shortcut2];
+  allPaths.forEach((path) => {
     for (let i = 0; i < path.length - 1; i++) {
-      const startNode = stations[path[i]];
-      const endNode = stations[path[i + 1]];
-      ctx.beginPath();
-      ctx.moveTo(startNode.x, startNode.y);
-      ctx.lineTo(endNode.x, endNode.y);
-      ctx.stroke();
+      const startNode = stations.find((s) => s.id === path[i]);
+      const endNode = stations.find((s) => s.id === path[i + 1]);
+      if (startNode && endNode) {
+        ctx.beginPath();
+        ctx.moveTo(startNode.x, startNode.y);
+        ctx.lineTo(endNode.x, endNode.y);
+        ctx.stroke();
+      }
     }
-  }
+  });
 
-  // 자리(원) 그리기
   stations.forEach((s) => {
     ctx.beginPath();
     const radius =
@@ -96,89 +91,107 @@ function drawBoard() {
     ctx.fillStyle = s.id === 0 ? "cyan" : "black";
     ctx.fill();
     ctx.stroke();
-
-    // 자리 ID 텍스트 그리기
     ctx.fillStyle = "white";
     ctx.font = "10px sans-serif";
     ctx.textAlign = "center";
-    ctx.textBaseline = "middle"; // 텍스트를 원의 정중앙에 위치시킴
+    ctx.textBaseline = "middle";
     ctx.fillText(s.id, s.x, s.y);
   });
 }
 
-// --- [3단계] 새로운 코드 시작 ---
+// --- [3단계] '말' 데이터 및 로직 (대규모 수정) ---
 
-// 3-1. 플레이어와 AI '말' 데이터 정의
 const cat = {
-  id: 0, // 현재 위치한 station의 id
+  currentStationId: 0,
   color: "white",
   pieceRadius: 10,
+  currentPath: paths.outer, // 현재 이동 중인 경로
 };
 
 const rat = {
-  id: 0,
+  currentStationId: 0,
   color: "red",
   pieceRadius: 10,
+  currentPath: paths.outer,
 };
 
-// 3-2. '말'을 이동시키는 함수
-// (지금은 가장 바깥 경로만 따라 움직이는 간단한 버전)
+// 턴 관리 변수
+let isPlayerTurn = true;
+
+// '말'을 이동시키는 함수 (지름길 로직 추가)
 function movePiece(piece, steps) {
-  const currentPath = paths.outer; // 현재는 바깥 경로만 사용
-  const currentIndex = currentPath.indexOf(piece.id);
+  // 1. 현재 위치가 코너인지 확인
+  const isAtShortcutStart =
+    piece.currentPath === paths.outer &&
+    (piece.currentStationId === 4 || piece.currentStationId === 12);
+  if (isAtShortcutStart) {
+    // 지름길 우선 적용
+    piece.currentPath =
+      piece.currentStationId === 4 ? paths.shortcut1 : paths.shortcut2;
+  }
 
-  if (currentIndex === -1) return; // 경로에 없는 경우 움직이지 않음
+  const currentPath = piece.currentPath;
+  let currentIndexOnPath = currentPath.indexOf(piece.currentStationId);
 
-  // 20칸이므로, 20으로 나눈 나머지로 순환시킴
-  // -1 (도착) 처리를 위해 경로 길이보다 1 작은 19를 사용
-  let nextIndex = (currentIndex + steps) % 20;
-
-  // 빽도 처리
+  // 2. 이동할 다음 위치 계산
   if (steps === -1) {
-    nextIndex = currentIndex === 0 ? 19 : currentIndex - 1;
+    // 빽도
+    currentIndexOnPath =
+      currentIndexOnPath === 0
+        ? currentPath.length - 2
+        : currentIndexOnPath - 1;
+  } else {
+    // 일반 이동
+    currentIndexOnPath += steps;
   }
 
-  piece.id = currentPath[nextIndex];
+  // 3. 완주 또는 경로 변경 체크
+  if (currentIndexOnPath >= currentPath.length - 1) {
+    // 완주!
+    piece.currentStationId = 0;
+    piece.currentPath = paths.outer; // 경로 초기화
+    console.log(`${piece.color} 완주!`);
+  } else {
+    piece.currentStationId = currentPath[currentIndexOnPath];
+    // 지름길이 끝나는 지점에 도달하면 다시 바깥 경로로 변경
+    if (
+      (piece.currentPath === paths.shortcut1 && piece.currentStationId === 8) ||
+      (piece.currentPath === paths.shortcut2 && piece.currentStationId === 0)
+    ) {
+      piece.currentPath = paths.outer;
+    }
+  }
 }
 
-// 3-3. '말'을 그리는 함수
 function drawPieces() {
-  // 고양이 그리기
-  const catStation = stations.find((s) => s.id === cat.id);
-  if (catStation) {
-    ctx.beginPath();
-    ctx.arc(catStation.x, catStation.y, cat.pieceRadius, 0, Math.PI * 2);
-    ctx.fillStyle = cat.color;
-    ctx.fill();
-    ctx.strokeStyle = "black"; // 눈에 잘 띄게 검은 테두리 추가
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }
-
-  // 쥐 그리기
-  const ratStation = stations.find((s) => s.id === rat.id);
-  if (ratStation) {
-    // 쥐는 고양이와 살짝 겹치지 않게 위치 조정
-    const ratX = ratStation.x + 5;
-    const ratY = ratStation.y + 5;
-    ctx.beginPath();
-    ctx.arc(ratX, ratY, rat.pieceRadius, 0, Math.PI * 2);
-    ctx.fillStyle = rat.color;
-    ctx.fill();
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }
+  [cat, rat].forEach((piece, index) => {
+    const station = stations.find((s) => s.id === piece.currentStationId);
+    if (station) {
+      // 말이 겹치지 않도록 살짝 옆으로 그림
+      const offsetX = index === 0 ? -5 : 5;
+      ctx.beginPath();
+      ctx.arc(
+        station.x + offsetX,
+        station.y,
+        piece.pieceRadius,
+        0,
+        Math.PI * 2
+      );
+      ctx.fillStyle = piece.color;
+      ctx.fill();
+      ctx.strokeStyle = "black";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  });
 }
 
-// --- 화면을 그리는 메인 함수 (수정) ---
+// --- 화면을 그리는 메인 함수 ---
 function draw() {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  drawBoard(); // 윷놀이판 먼저 그리고
-
-  drawPieces(); // 그 위에 고양이와 쥐 말을 그림! (새로 추가)
+  drawBoard();
+  drawPieces();
 
   ctx.fillStyle = "white";
   ctx.font = "48px sans-serif";
@@ -190,13 +203,43 @@ function draw() {
   ctx.fillText(resultText, canvas.width / 2, canvas.height - 30);
 }
 
+// --- [4단계] 게임 루프 및 AI 턴 처리 ---
+
+// 쥐의 턴을 처리하는 함수
+function handleRatTurn() {
+  isPlayerTurn = false;
+  draw(); // "Rat's Turn..." 메시지 표시
+
+  // 쥐가 생각하는 것처럼 보이게 1초 지연
+  setTimeout(() => {
+    throwYut();
+    movePiece(rat, yutResult.value);
+
+    // 쥐가 윷이나 모를 던졌는지 체크
+    if (yutResult.name === "Yut" || yutResult.name === "Mo") {
+      handleRatTurn(); // 한 번 더!
+    } else {
+      isPlayerTurn = true; // 플레이어 턴으로 전환
+      yutResult = { name: "Ready", value: 0 }; // 결과 초기화
+      draw();
+    }
+  }, 1000); // 1초 (1000ms)
+}
+
 // --- 이벤트 처리 및 게임 시작 (수정) ---
 canvas.addEventListener("click", () => {
+  // 플레이어 턴일 때만 윷 던지기 가능
+  if (!isPlayerTurn) return;
+
   throwYut();
-  movePiece(cat, yutResult.value); // 윷 결과만큼 고양이 이동!
+  movePiece(cat, yutResult.value);
   draw();
+
+  // 윷이나 모가 아니면 쥐의 턴으로 넘어감
+  if (yutResult.name !== "Yut" && yutResult.name !== "Mo") {
+    handleRatTurn();
+  }
 });
 
 // 게임 시작
-// (drawBoard() 함수는 draw() 내부에서 호출되므로 여기서 따로 호출할 필요 없음)
 draw();
