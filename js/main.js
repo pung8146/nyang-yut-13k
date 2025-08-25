@@ -106,14 +106,80 @@ function drawBoard() {
   });
 }
 
-// --- 화면을 그리는 메인 함수 ---
+// --- [3단계] 새로운 코드 시작 ---
+
+// 3-1. 플레이어와 AI '말' 데이터 정의
+const cat = {
+  id: 0, // 현재 위치한 station의 id
+  color: "white",
+  pieceRadius: 10,
+};
+
+const rat = {
+  id: 0,
+  color: "red",
+  pieceRadius: 10,
+};
+
+// 3-2. '말'을 이동시키는 함수
+// (지금은 가장 바깥 경로만 따라 움직이는 간단한 버전)
+function movePiece(piece, steps) {
+  const currentPath = paths.outer; // 현재는 바깥 경로만 사용
+  const currentIndex = currentPath.indexOf(piece.id);
+
+  if (currentIndex === -1) return; // 경로에 없는 경우 움직이지 않음
+
+  // 20칸이므로, 20으로 나눈 나머지로 순환시킴
+  // -1 (도착) 처리를 위해 경로 길이보다 1 작은 19를 사용
+  let nextIndex = (currentIndex + steps) % 20;
+
+  // 빽도 처리
+  if (steps === -1) {
+    nextIndex = currentIndex === 0 ? 19 : currentIndex - 1;
+  }
+
+  piece.id = currentPath[nextIndex];
+}
+
+// 3-3. '말'을 그리는 함수
+function drawPieces() {
+  // 고양이 그리기
+  const catStation = stations.find((s) => s.id === cat.id);
+  if (catStation) {
+    ctx.beginPath();
+    ctx.arc(catStation.x, catStation.y, cat.pieceRadius, 0, Math.PI * 2);
+    ctx.fillStyle = cat.color;
+    ctx.fill();
+    ctx.strokeStyle = "black"; // 눈에 잘 띄게 검은 테두리 추가
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // 쥐 그리기
+  const ratStation = stations.find((s) => s.id === rat.id);
+  if (ratStation) {
+    // 쥐는 고양이와 살짝 겹치지 않게 위치 조정
+    const ratX = ratStation.x + 5;
+    const ratY = ratStation.y + 5;
+    ctx.beginPath();
+    ctx.arc(ratX, ratY, rat.pieceRadius, 0, Math.PI * 2);
+    ctx.fillStyle = rat.color;
+    ctx.fill();
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+// --- 화면을 그리는 메인 함수 (수정) ---
 function draw() {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  drawBoard();
+  drawBoard(); // 윷놀이판 먼저 그리고
 
-  // 결과 텍스트 그리기
+  drawPieces(); // 그 위에 고양이와 쥐 말을 그림! (새로 추가)
+
   ctx.fillStyle = "white";
   ctx.font = "48px sans-serif";
   ctx.textAlign = "center";
@@ -124,11 +190,13 @@ function draw() {
   ctx.fillText(resultText, canvas.width / 2, canvas.height - 30);
 }
 
-// --- 이벤트 처리 및 게임 시작 ---
+// --- 이벤트 처리 및 게임 시작 (수정) ---
 canvas.addEventListener("click", () => {
   throwYut();
+  movePiece(cat, yutResult.value); // 윷 결과만큼 고양이 이동!
   draw();
 });
 
 // 게임 시작
+// (drawBoard() 함수는 draw() 내부에서 호출되므로 여기서 따로 호출할 필요 없음)
 draw();
